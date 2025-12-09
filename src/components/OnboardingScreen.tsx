@@ -144,7 +144,31 @@ export function OnboardingScreen({ onDataLoaded, onDemoMode }: OnboardingScreenP
                 <p><strong>How to export:</strong></p>
                 <p>Robinhood App &gt; Menu &gt; Statements &gt; Export Data &gt; CSV</p>
                 <p style={{ marginTop: '0.5rem' }}>Your data is processed locally in your browser and is never uploaded to any server.</p>
+
+                <div style={{ marginTop: '1.5rem', borderTop: '1px solid #333', paddingTop: '1rem' }}>
+                    <p style={{ marginBottom: '0.5rem', color: '#888' }}>
+                        ⏳ Export taking forever? (It can take 2-3 hours)
+                    </p>
+                    <a
+                        href="https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            color: '#1DB954',
+                            textDecoration: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontWeight: 'bold',
+                            justifyContent: 'center',
+                            marginTop: '0.5rem'
+                        }}
+                    >
+                        <span>🎧 Jam to this "Hustle" playlist while you wait</span>
+                    </a>
+                </div>
             </div>
         </div>
     );
+}
 }
