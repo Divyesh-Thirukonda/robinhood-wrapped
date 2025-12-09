@@ -49,7 +49,7 @@ export function OnboardingScreen({ onDataLoaded, onDemoMode }: OnboardingScreenP
 
             <div className="animate-up" style={{ animationDelay: '0.1s', marginBottom: '2rem' }}>
                 <p style={{ color: '#888', marginBottom: '1rem' }}>
-                    See your 2024 trading year in review.
+                    See your 2025 trading year in review.
                 </p>
 
                 <button
@@ -171,4 +171,4 @@ export function OnboardingScreen({ onDataLoaded, onDemoMode }: OnboardingScreenP
         </div>
     );
 }
-}
+
