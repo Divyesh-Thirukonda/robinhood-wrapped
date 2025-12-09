@@ -28,7 +28,6 @@ export async function parseCSV(file: File, currentPortfolioValue: number): Promi
             currentField = '';
         } else if ((char === '\n' || char === '\r') && !insideQuote) {
             // End of row
-            // Handle CRLF (only push if we have content)
             if (char === '\r' && nextChar === '\n') continue; // Skip CR in CRLF
 
             currentRow.push(currentField.trim());
@@ -47,12 +46,11 @@ export async function parseCSV(file: File, currentPortfolioValue: number): Promi
         rows.push(currentRow);
     }
 
-    // Assuming first row is header
+    // Identify headers
     const headers = rows[0];
     const idxTransCode = headers.indexOf('Trans Code');
     const idxAmount = headers.findIndex(h => h === 'Amount' || h === 'Total Cost');
     const idxInstrument = headers.indexOf('Instrument');
-    // const idxDescription = headers.indexOf('Description');
 
     let totalDeposits = 0;
     let totalWithdrawals = 0;
@@ -62,7 +60,9 @@ export async function parseCSV(file: File, currentPortfolioValue: number): Promi
     // Helper to parse currency: "($1,234.56)" -> -1234.56
     const parseAmount = (str: string): number => {
         if (!str) return 0;
+        // Remove $ and ,
         const clean = str.replace(/[$,]/g, '');
+        // Handle parenthesis for negative
         if (clean.startsWith('(') && clean.endsWith(')')) {
             return -1 * parseFloat(clean.slice(1, -1));
         }
@@ -71,27 +71,38 @@ export async function parseCSV(file: File, currentPortfolioValue: number): Promi
 
     for (let i = 1; i < rows.length; i++) {
         const cols = rows[i];
-        if (cols.length < headers.length) continue; // Skip malformed rows
+        if (cols.length < headers.length) continue;
 
+        // Safe access
         const transCode = idxTransCode > -1 ? cols[idxTransCode] : '';
         const amountStr = idxAmount > -1 ? cols[idxAmount] : '0';
         const amount = parseAmount(amountStr);
         const instrument = idxInstrument > -1 ? cols[idxInstrument] : '';
 
-        // Deposits / Withdrawals
-        // ACH, RTP (Real Time Payment/Instant), XENT (Transfer), GDBP (Gold Deposit), INT (Interest - maybe count as deposit/income?)
-        if (['ACH', 'RTP', 'XENT', 'GDBP'].includes(transCode)) {
+        // --- Categorization Logic ---
+
+        // 1. Net Deposits (External Flow)
+        // ACH: Standard bank deposit
+        // RTP: Real Time Payment (Instant Transfer)
+        // XENT: Internal/External Transfer (Spending <-> Brokerage)
+        // WIRE: Wire Transfer
+        if (['ACH', 'RTP', 'XENT', 'WIRE'].includes(transCode)) {
             if (amount > 0) totalDeposits += amount;
             else if (amount < 0) totalWithdrawals += Math.abs(amount);
         }
 
-        // Trades (Buy, Sell, Options)
-        // Buy, Sell, BTO (Buy to Open), STC (Sell to Close), STO (Sell to Open), BTC (Buy to Close)
+        // 2. PnL / Activity (Internal Flow - Ignored for Deposits, but counted for Trades/Ops)
+        // GDBP: Gold Deposit Boost Payment (Income -> PnL)
+        // INT: Interest (Income -> PnL)
+        // CDIV: Cash Dividend (Income -> PnL)
+        // SLIP: Stock Lending Income (Income -> PnL)
+        // GOLD: Gold Fee (Expense -> PnL)
+
+        // 3. Trade Counting
         if (['Buy', 'Sell', 'BTO', 'STC', 'STO', 'BTC', 'OEXP'].includes(transCode)) {
             totalTrades++;
 
-            // Track frequency for Top Stock
-            // Only count actual trade actions, not Expirations (OEXP) for "Favorite" maybe?
+            // Track for Top Stock (exclude Expirations for cleaner list)
             if (instrument && transCode !== 'OEXP') {
                 stockCounts[instrument] = (stockCounts[instrument] || 0) + 1;
             }
@@ -101,9 +112,10 @@ export async function parseCSV(file: File, currentPortfolioValue: number): Promi
     const sortedStocks = Object.entries(stockCounts).sort((a, b) => b[1] - a[1]);
     const topTicker = sortedStocks.length > 0 ? sortedStocks[0][0] : 'N/A';
 
-    // Calculate Net PnL
-    // Formula: Current Value - (Total Deposits - Total Withdrawals)
-    // If user made $10k profit, Current Value should be (Deposits + 10k)
+    // PnL Calculation
+    // Net PnL = End Value - (Deposits - Withdrawals)
+    // Example: Start 0. Deposit 1000. Grow to 1200. PnL = 1200 - (1000) = 200.
+    // Example: Start 0. Deposit 1000. Interest 10. Value 1010. PnL = 1010 - 1000 = 10. Correct.
     const netPnL = currentPortfolioValue - (totalDeposits - totalWithdrawals);
     const pnlPercentage = totalDeposits > 0 ? (netPnL / totalDeposits) * 100 : 0;
 
