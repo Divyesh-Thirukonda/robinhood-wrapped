@@ -142,7 +142,17 @@ export function OnboardingScreen({ onDataLoaded, onDemoMode }: OnboardingScreenP
 
             <div className="animate-up" style={{ marginTop: '2rem', animationDelay: '0.3s', fontSize: '0.8rem', color: '#666', maxWidth: '300px' }}>
                 <p><strong>How to export:</strong></p>
-                <p>Menu &gt; Reports and Statements &gt; Reports &gt; Generate new report</p>
+                <div style={{ margin: '0.5rem 0' }}>
+                    <a
+                        href="https://robinhood.com/account/reports-statements/activity-reports"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--rh-green)', fontWeight: 'bold', textDecoration: 'none' }}
+                    >
+                        Go to Robinhood Reports ↗
+                    </a>
+                </div>
+                <p>Documents &gt; Reports &gt; Generate new report</p>
                 <p style={{ marginTop: '0.5rem' }}>Your data is processed locally in your browser and is never uploaded to any server.</p>
 
                 <div style={{ marginTop: '1.5rem', borderTop: '1px solid #333', paddingTop: '1rem' }}>
